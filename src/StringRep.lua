@@ -1,3 +1,7 @@
+--!native
+--!optimize 2
+--!strict
+
 local RepeatCache = {}
 
 local function StringRep(ToRepeat: string, Amount: number): string

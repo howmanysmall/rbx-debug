@@ -1,4 +1,6 @@
+--!native
 --!optimize 2
+
 local StringRep = require(script:FindFirstChild("StringRep"))
 
 local Debug = {}
@@ -58,7 +60,8 @@ local function GetErrorData(Error, ...) -- Make sure if you don't intend to form
 
 	local Arguments = {...}
 	local Traceback = debug.traceback()
-	local ErrorDepth = select(2, string.gsub(Traceback, "\n", "")) - 2
+	local _, ErrorDepth = string.gsub(Traceback, "\n", "")
+	ErrorDepth -= 2
 
 	local Prefix
 	Error, Prefix = string.gsub(Error, "^!", "", 1)
@@ -91,7 +94,7 @@ local function GetErrorData(Error, ...) -- Make sure if you don't intend to form
 
 	local Success, ErrorString = pcall(
 		string.format,
-		"[%s] {%s} " .. string.gsub(Error, "%%q", "%%s"),
+		"[%*] {%*} " .. string.gsub(Error, "%%q", "%%*"),
 		ModuleName,
 		Replacers[FunctionName] or FunctionName,
 		table.unpack(Arguments)
@@ -131,7 +134,7 @@ function Debug.InspectFormat(FormatString, ...)
 	end
 
 	local Success, ErrorString =
-		pcall(string.format, (string.gsub(FormatString, "%%q", "%%s")), table.unpack(Arguments))
+		pcall(string.format, (string.gsub(FormatString, "%%q", "%%*")), table.unpack(Arguments))
 
 	if Success then
 		return ErrorString
@@ -166,7 +169,7 @@ local function Alphabetically(A, B)
 		if TypeA == "number" then
 			return (A :: number) < B :: number
 		else
-			return string.lower(tostring(A)) < string.lower(tostring(B))
+			return string.lower(`{A}`) < string.lower(`{B}`)
 		end
 	else
 		return TypeA < TypeB
@@ -201,7 +204,7 @@ function Debug.UnionIteratorFunctions(...)
 		end
 	end
 
-			-- stylua: ignore
+	-- stylua: ignore
 	return function(Table)
 		local Count = 0
 		local Order = {[0] = {}}
@@ -263,7 +266,7 @@ local function Parse(Object, Multiline, Depth, EncounteredTables)
 		or Type == "string" and "\"" .. Object .. "\""
 		or Type == "Instance" and "<" .. Debug.DirectoryToString(Object) .. ">"
 		or (Type == "function" or Type == "userdata") and Type
-		or tostring(Object)
+		or `{Object}`
 end
 
 function ConvertTableIntoString(Table, TableName, Multiline, Depth, EncounteredTables)
@@ -398,7 +401,7 @@ function Debug.Inspect(...: any): string
 			-- stylua: ignore
 			DataString = DataType == "table" and Debug.TableToString(Data)
 				or DataType == "string" and "\"" .. Data .. "\""
-				or tostring(Data)
+				or `{Data}`
 		end
 
 		Length += 1
@@ -412,5 +415,4 @@ function Debug.Inspect(...: any): string
 	return string.sub(table.concat(ListBuilder), 3)
 end
 
-table.freeze(Debug)
-return Debug
+return table.freeze(Debug)
